@@ -10,6 +10,7 @@ using PluginAPI.Core;
 using PluginAPI.Core.Attributes;
 using PluginAPI.Events;
 using YYYServerPurePlugin.MyApi;
+using YYYServerPurePlugin.ServerFuctions.MapFuc;
 
 namespace YYYServerPurePlugin
 {
@@ -19,7 +20,12 @@ namespace YYYServerPurePlugin
         void OnEabled()
         {
             Log.Info("服务器开始加载了");
+            Log.Info("垃圾清理");
             EventManager.RegisterEvents(this);
+            Log.Info("核弹室扣血");
+            EventManager.RegisterEvents<NuclearRadiation>(this);
+            Log.Info("UI系统");
+            EventManager.RegisterEvents<HintMainClass>(this);
         }
        [PluginEvent(PluginAPI.Enums.ServerEventType.RoundStart)]
         void OnRoundStart()

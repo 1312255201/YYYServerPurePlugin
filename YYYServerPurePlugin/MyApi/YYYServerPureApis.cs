@@ -1,4 +1,5 @@
-﻿using InventorySystem.Items.Firearms;
+﻿using System.Collections.Generic;
+using InventorySystem.Items.Firearms;
 using InventorySystem.Items.Firearms.BasicMessages;
 using PluginAPI.Core;
 using YYYServerPurePlugin.ServerFuctions;
