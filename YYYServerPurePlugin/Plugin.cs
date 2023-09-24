@@ -6,11 +6,13 @@ using System.Threading.Tasks;
 using InventorySystem.Items.Pickups;
 using MEC;
 using Mirror;
+using PlayerRoles;
 using PluginAPI.Core;
 using PluginAPI.Core.Attributes;
 using PluginAPI.Events;
 using YYYServerPurePlugin.MyApi;
 using YYYServerPurePlugin.ServerFuctions.MapFuc;
+using YYYServerPurePlugin.ServerFuctions.SeverEvent;
 
 namespace YYYServerPurePlugin
 {
@@ -26,11 +28,34 @@ namespace YYYServerPurePlugin
             EventManager.RegisterEvents<NuclearRadiation>(this);
             Log.Info("UI系统");
             EventManager.RegisterEvents<HintMainClass>(this);
+            Log.Info("MVP系统");
+            EventManager.RegisterEvents<MvpFuc>(this);
         }
        [PluginEvent(PluginAPI.Enums.ServerEventType.RoundStart)]
         void OnRoundStart()
         {
             Timing.RunCoroutine(CleanFloorPlugin());
+            foreach (var variablePlayer in Player.GetPlayers())
+            {
+                MyApi.MyApi.SetNick(variablePlayer);
+            }
+        }
+
+        [PluginEvent]
+        void OnPlayerJoin(PlayerJoinedEvent ev)
+        {
+            MyApi.MyApi.SetNick(ev.Player);
+        }
+
+        [PluginEvent]
+        void OnPlayerChangingRole(PlayerChangeRoleEvent ev)
+        {
+            if (ev.NewRole == RoleTypeId.FacilityGuard)
+            {
+                Timing.CallDelayed(1f, () => {
+                    ev.Player.AddAmmo(ItemType.Ammo9x19,60);
+                });
+            }
         }
         private static IEnumerator<float> CleanFloorPlugin()
         {

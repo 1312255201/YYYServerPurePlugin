@@ -82,6 +82,8 @@
     <Compile Include="ServerFuctions\MapFuc\HintMainClass.cs" />
     <Compile Include="ServerFuctions\MapFuc\NuclearRadiation.cs" />
     <Compile Include="ServerFuctions\MapFuc\SystemNuke.cs" />
+    <Compile Include="ServerFuctions\SeverEvent\ExpSystem.cs" />
+    <Compile Include="ServerFuctions\SeverEvent\MvpFuc.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
