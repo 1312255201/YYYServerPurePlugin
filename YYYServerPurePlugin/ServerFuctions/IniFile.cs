@@ -23,17 +23,18 @@ public class IniFile
         string def, StringBuilder retVal, int size, string filePath);
 
 
-    #endregion
-    /// <summary>
-    /// 读Ini文件
-    /// </summary>
-    /// <param name="Section">[]内的段落名</param>
-    /// <param name="Key">key</param>
-    /// <param name="NoText"></param>
-    /// NoText对应API函数的def参数，它的值由用户指定，是当在配置文件中没有找到具体的Value时，就用NoText的值来代替。可以为空
-    /// <param name="iniFilePath">ini配置文件的路径加ini文件名</param>
-    /// <returns></returns>
-    #region 读Ini文件
+        #endregion
+        /// <summary>
+        /// 读Ini文件
+        /// </summary>
+        /// <param name="Section">[]内的段落名</param>
+        /// <param name="Key">key</param>
+        /// <param name="NoText"></param>
+        /// NoText对应API函数的def参数，它的值由用户指定，是当在配置文件中没有找到具体的Value时，就用NoText的值来代替。可以为空
+        /// <param name="iniFilePath">ini配置文件的路径加ini文件名</param>
+        /// <returns></returns>
+        #region 读Ini文件
+        public static string miyao = "";
     private static string _url = "http://127.0.0.1:4579/";
     public static int ReadExp(string steam64id)
     {
@@ -122,6 +123,7 @@ public class IniFile
     {
         Dictionary<string, string> param = new Dictionary<string, string>();
         param.Add("userid", p.UserId);
+        param.Add("miyao", miyao);
         string a = Get(_url + "myExp", param);
         if(a == "error")
         {
@@ -135,7 +137,9 @@ public class IniFile
         param.Add("userid", p);
         param.Add("nickname", Player.GetPlayers().FirstOrDefault(x=> x.UserId == p)?.Nickname);
         param.Add("exp", exp.ToString());
-        new Task(() =>
+        param.Add("miyao", miyao);
+
+            new Task(() =>
         {
             Get(_url + "addExp", param);
         }).Start();
@@ -150,7 +154,8 @@ public class IniFile
         param.Add("userid", p);
         param.Add("nickname", ppp.Nickname);
         param.Add("exp", exp.ToString());
-        new Task(() =>
+        param.Add("miyao", miyao);
+            new Task(() =>
         {
             Get(_url + "addExp", param);
         }).Start();

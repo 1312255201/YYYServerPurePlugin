@@ -11,6 +11,7 @@ using PluginAPI.Core;
 using PluginAPI.Core.Attributes;
 using PluginAPI.Events;
 using YYYServerPurePlugin.MyApi;
+using YYYServerPurePlugin.ServerFuctions;
 using YYYServerPurePlugin.ServerFuctions.MapFuc;
 using YYYServerPurePlugin.ServerFuctions.SeverEvent;
 
@@ -30,6 +31,7 @@ namespace YYYServerPurePlugin
             EventManager.RegisterEvents<HintMainClass>(this);
             Log.Info("MVP系统");
             EventManager.RegisterEvents<MvpFuc>(this);
+            IniFile.miyao = config.miyao;
         }
        [PluginEvent(PluginAPI.Enums.ServerEventType.RoundStart)]
         void OnRoundStart()

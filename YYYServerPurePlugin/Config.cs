@@ -6,5 +6,7 @@ namespace YYYServerPurePlugin
     {
         [Description("是否开启Debug")]
         public bool Debug { get; set; } = true;
+        [Description("秘钥")]
+        public string miyao { get; set; } = "";
     }
 }
