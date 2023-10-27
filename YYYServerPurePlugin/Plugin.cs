@@ -19,6 +19,7 @@ namespace YYYServerPurePlugin
 {
     public class Plugin
     {
+        private static List<ushort> items_to_clean = new();
         [PluginEntryPoint("YYYServerPurePlugin", "0.0.1", "嘤嘤嘤服务器的纯净服务器插件2.0", "咕咕鱼")]
         void OnEabled()
         {
@@ -36,6 +37,7 @@ namespace YYYServerPurePlugin
        [PluginEvent(PluginAPI.Enums.ServerEventType.RoundStart)]
         void OnRoundStart()
         {
+            items_to_clean.Clear();
             Timing.RunCoroutine(CleanFloorPlugin());
             foreach (var variablePlayer in Player.GetPlayers())
             {
@@ -112,7 +114,14 @@ namespace YYYServerPurePlugin
                             {
                                 continue;
                             }
-                            NetworkServer.Destroy(itemPickupBase.gameObject);
+                            if (items_to_clean.Contains(itemPickupBase.Info.Serial))
+                            {
+                                NetworkServer.Destroy(itemPickupBase.gameObject);
+                            }
+                            else
+                            {
+                                items_to_clean.Add(itemPickupBase.Info.Serial);
+                            }
                             itemnum++;
                         }
                         Server.SendBroadcast("[<color=#0FF>小鱼服务器清理大师</color>]\n好饱啊，本次一共清理了\n" + itemnum + "件物品" + ragdollnum + "个尸体",10);
