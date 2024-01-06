@@ -29,7 +29,7 @@ public class NuclearRadiation
             {
                 try
                 {
-                    if (variablPlayer.Room.Name == RoomName.HczWarhead&& variablPlayer.Position.y > -800)
+                    if (variablPlayer.Room.Name == RoomName.HczWarhead&& variablPlayer.Position.y > -800 && variablPlayer.Role != RoleTypeId.Scp079)
                     {
                         if (nukes.Contains(variablPlayer.PlayerId))
                         {

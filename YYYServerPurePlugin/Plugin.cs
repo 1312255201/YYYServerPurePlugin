@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using InventorySystem.Items.Pickups;
 using MEC;
 using Mirror;
 using PlayerRoles;
+using PlayerRoles.Ragdolls;
 using PluginAPI.Core;
 using PluginAPI.Core.Attributes;
 using PluginAPI.Events;
@@ -51,6 +54,17 @@ namespace YYYServerPurePlugin
             MyApi.MyApi.SetNick(ev.Player);
         }
 
+        [PluginEvent]
+         void OnRestartingRound(RoundRestartEvent ev)
+        {
+            Timing.CallDelayed(0.5f, () => {
+                var tcpClient = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                IPAddress ipaddress = IPAddress.Parse("127.0.0.1");
+                EndPoint point = new IPEndPoint(ipaddress, Server.Port + 1000);
+                tcpClient.Connect(point);
+                tcpClient.Send(Encoding.UTF8.GetBytes(Server.Port.ToString()));
+            });
+        }
         [PluginEvent]
         void OnPlayerChangingRole(PlayerChangeRoleEvent ev)
         {

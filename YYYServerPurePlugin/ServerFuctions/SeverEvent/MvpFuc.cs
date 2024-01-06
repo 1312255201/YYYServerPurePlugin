@@ -185,7 +185,6 @@ namespace YYYServerPurePlugin.ServerFuctions.SeverEvent;
            {
 
            }
-
        }
        [PluginEvent]
        void RoundRestart(RoundRestartEvent ev)
