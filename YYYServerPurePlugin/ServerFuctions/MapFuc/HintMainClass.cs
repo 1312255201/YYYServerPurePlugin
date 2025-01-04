@@ -5,6 +5,7 @@ using System.Text;
 using MEC;
 using PlayerRoles;
 using PlayerRoles.PlayableScps.Scp079;
+using PlayerStatsSystem;
 using PluginAPI.Core;
 using PluginAPI.Core.Attributes;
 using PluginAPI.Events;
@@ -13,309 +14,447 @@ using UnityEngine;
 
 namespace YYYServerPurePlugin.ServerFuctions.MapFuc;
 
-public class awa
-{
-    private Player player;
-    private int playerid;
-    private bool wait2;
-    private List<string> strings = new();
-    public Player playerawa { get => player; set => player = value; }
-    public int playeridawa { get => playerid; set => playerid = value; }
-    public List<string> message { get => strings; set => strings = value; }
-    public bool wait { get => wait2; set => wait2 = value; }
-}
-
-public class HintMainClass
-{
-    public static string deathinfo;
-    private static List<CoroutineHandle> Coroutines = new();
-    private static List<string> chatList = new();
-    private static string scphpinfo;
-    public static List<awa> awas = new();
-    public static bool showchat;
-    public static void RemovePlayerInfo(Player player)
+    public enum ScreenType
     {
-        foreach (var awa2 in awas)
-        {
-            if (awa2.playeridawa != player.PlayerId) continue;
-            var temp = "";
-            foreach (var message in awa2.message.Where(message => message.Contains("玩家角色介绍")))
-            {
-                temp = message;
-            }
-            if (temp != "")
-            {
-                awa2.message.Remove(temp);
-            }
-
-        }
+        TOP,
+        CenterTop,
+        Center,
+        CenterBottom,
+        BottomTop,
+        Bottom,
+        End
     }
-    public static void AddPlayerInfo(Player player, string info)
+     
+    public class PlayerHintInfo
     {
-        foreach (var awa2 in awas)
+        public bool wait;
+        public Dictionary<ScreenType,string> showInfo = new()
         {
-            if (awa2.playeridawa != player.PlayerId) continue;
-            var temp = "";
-            foreach (var message in awa2.message.Where(message => message.Contains("玩家角色介绍")))
-            {
-                temp = message;
-            }
-            if (temp != "")
-            {
-                awa2.message.Remove(temp);
-            }
-            awa2.message.Add("\n\n\n\n\n\n\n<align=center><size=0>玩家角色介绍</size>\n<size=20>" + info + "</size></align>");
-        }
+            { ScreenType.TOP ,""},
+            { ScreenType.CenterTop ,""},
+            { ScreenType.Center ,""},
+            { ScreenType.CenterBottom ,""},
+            { ScreenType.BottomTop ,""},
+            { ScreenType.Bottom ,""},
+        };
+        public string playerinfo;
+        public string spectinfo;
     }
-    public static void GetSCPHP()
+    public class HintMainClass
     {
-        int scp492num = 0;
-        string tmpscpinfo = "";
-        foreach (var player in Player.GetPlayers())
+        public static string deathinfo;
+        private static List<CoroutineHandle> Coroutines = new();
+        private static List<string> chatList = new();
+        public static int infoid = 0;
+        public static Dictionary<int, PlayerHintInfo> PlayerHintInfos = new();
+        public static void RemovePlayerInfo(Player player)
         {
-            try
+            if (!PlayerHintInfos.ContainsKey(player.PlayerId))
             {
-                if (player.Role == RoleTypeId.Scp106)
-                {
-                    tmpscpinfo = tmpscpinfo + "\n<color=#FFA500>SCP106</color>[<color=#FFFF00>" + player.Health + "/" + player.MaxHealth + "</color>][AHP:<color=#FF0000>" + player.ReferenceHub.playerStats.StatModules[4].CurValue + "</color>]";
-                }
-                if (player.Role == RoleTypeId.Scp939)
-                {
-                    tmpscpinfo = tmpscpinfo + "\n<color=#FFA500>SCP939</color>[<color=#FFFF00>" + player.Health + "/" + player.MaxHealth + "</color>][AHP:<color=#FF0000>" + player.ReferenceHub.playerStats.StatModules[4].CurValue + "</color>]";
-                }
-                if (player.Role == RoleTypeId.Scp173)
-                {
-                    tmpscpinfo = tmpscpinfo + "\n<color=#FFA500>SCP173</color>[<color=#FFFF00>" + player.Health + "/" + player.MaxHealth + "</color>][AHP:<color=#FF0000>" + player.ReferenceHub.playerStats.StatModules[4].CurValue + "</color>]";
-                }
-                if (player.Role == RoleTypeId.Scp049)
-                {
-                    tmpscpinfo = tmpscpinfo + "\n<color=#FFA500>SCP049</color>[<color=#FFFF00>" + player.Health + "/" + player.MaxHealth + "</color>][AHP:<color=#FF0000>" + player.ReferenceHub.playerStats.StatModules[4].CurValue + "</color>]";
-                }
-                if (player.Role == RoleTypeId.Scp096)
-                {
-                    tmpscpinfo = tmpscpinfo + "\n<color=#FFA500><size=16>SCP096</color>[<color=#FFFF00>" + player.Health + "/" + player.MaxHealth + "</color>][AHP:<color=#FF0000>" + player.ReferenceHub.playerStats.StatModules[4].CurValue + "</color>]";
-                }
-                if (player.Role == RoleTypeId.Scp079)
-                {
-                    if (player.ReferenceHub.roleManager.CurrentRole is Scp079Role scp079Role)
-                    {
-                        scp079Role.SubroutineModule.TryGetSubroutine(out Scp079TierManager tier);
-                        scp079Role.SubroutineModule.TryGetSubroutine(out Scp079AuxManager tier2);
-                        tmpscpinfo = tmpscpinfo + "\n<color=#FFA500>SCP079</color><color=#FFFF00>[Online]等级:" +tier.AccessTierLevel + "电量:" +tier2._aux+"</color>";
-                    }
-
-                }
-                if (player.Role == RoleTypeId.Scp0492)
-                {
-                    scp492num++;
-                }
+                PlayerHintInfos[player.PlayerId] = new PlayerHintInfo();
             }
-            catch
-            {
-                    
-            }
+            PlayerHintInfos[player.PlayerId].playerinfo = "";
         }
-        tmpscpinfo += ("\n<color=#FFA500>小僵尸数量</color>[" + scp492num + "]");
-        scphpinfo = tmpscpinfo;
-    }
-    private static IEnumerator<float> YYYServerHint()
-    {
-        yield return Timing.WaitForSeconds(5f);
-        int awa = 0;
-        int mtfnum = 0;
-        int chinum = 0;
-        while (true)
+        public static void AddPlayerInfo(Player player, string info)
         {
-            yield return Timing.WaitForSeconds(1f);
-            awa++;
-            if (awa >= 20)
+            if (!PlayerHintInfos.ContainsKey(player.PlayerId))
             {
-                awa = 0;
-                GetSCPHP();
-                chinum = Player.GetPlayers().Count(x => x.Team == Team.ChaosInsurgency);
-                mtfnum = Player.GetPlayers().Count(x => x.Team == Team.FoundationForces);
+                PlayerHintInfos[player.PlayerId] = new PlayerHintInfo();
             }
-
-            try
-            {
-                if (Player.GetPlayers().Any(x=>x.Role == RoleTypeId.Spectator))
-                {
-                    string teamfuhuo = "";
-                    if (Respawn.NextKnownTeam == SpawnableTeamType.NineTailedFox)
-                    {
-                        teamfuhuo = "<color=#1E90FF>白给狐٩(๑❛ᴗ❛๑)۶</color>";
-                    }
-                    if (Respawn.NextKnownTeam == SpawnableTeamType.ChaosInsurgency)
-                    {
-                        teamfuhuo = "<color=#3CB371>馄饨裂开者ヾ(๑╹◡╹)ﾉ</color>";
-                    }
-                    if (Respawn.NextKnownTeam == SpawnableTeamType.None)
-                    {
-                        teamfuhuo = "我不知道别看我QAQ";
-                    }
-                    deathinfo = string.Concat("<align=right><size=21>", "<pos=30%>你已阵亡" + "\n<pos=30%>但是不用担心你马上会复活:</pos>", "\n<pos=30%>剩余时间:", Convert.ToInt32((TimeSpan.FromSeconds((double) RespawnManager.Singleton._timeForNextSequence - RespawnManager.Singleton._stopwatch.Elapsed.TotalSeconds)).TotalSeconds).ToString(), "</pos>\n<pos=30%><color=#4169E1>👮九尾狐机票数:</color>", Respawn.NtfTickets, "</pos>\n<pos=30%><color=#228B22>🐻混沌车票数:</color>", Respawn.ChaosTickets, "</pos>\n<pos=30%>👻当前观察者人数：", Player.GetPlayers().Count(x=>x.Role == RoleTypeId.Spectator).ToString(), "</pos>\n<pos=30%><color=#FFFF00>欢迎来到嘤嘤嘤服务器Q群285774856</color></pos>\n<pos=30%>服务器TPS(60为最高):"+Math.Round(1.0 / (double) Time.smoothDeltaTime)+"</pos>\n<pos=30%>欢迎加群反馈BUG</pos>\n<pos=30%>复活角色:", teamfuhuo, "</pos></size></align>");
-                }
-            }
-            catch
-            {
-                
-            }
-
-            
-            for (int i = 0; i < awas.Count(); i++)
+            PlayerHintInfos[player.PlayerId].playerinfo = info;
+        }
+        public static void GetSCPHP()
+        {
+            int scp492num = 0;
+            string tmpscpinfo = "";
+            Dictionary<Team, int> teamAmounts = new Dictionary<Team, int>();
+            var players = Player.GetPlayers().ToList();
+            foreach (var player in players)
             {
                 try
                 {
-                    if ((awas[i].message.Count >= 1 && awas[i].wait == false) || !awas[i].playerawa.IsAlive || awas[i].playerawa.Team == Team.SCPs || awas[i].playerawa.Team == Team.FoundationForces || awas[i].playerawa.Team == Team.ChaosInsurgency)
+                    if (player.Team == Team.SCPs)
                     {
-                        StringBuilder str = new StringBuilder();
-                        switch (awas[i].playerawa.Team)
+                        if (player.Role == RoleTypeId.Scp106)
                         {
-                            case Team.SCPs:
-                                str.Insert(0, "\n\n\n\n\n\n\n");
-                                str.Insert(0, "<size=20><align=right>"+scphpinfo+"</align></size>");
-                                break;
-                            case Team.ChaosInsurgency:
-                                str.Insert(0, "\n\n\n\n\n\n\n");
-                                str.Insert(0, "<size=20><align=right>当前混沌人数："+chinum+"</align></size>");
-                                break;
-                                case Team.FoundationForces:
-                                    str.Insert(0, "\n\n\n\n\n\n\n");
-                                    str.Insert(0, "<size=20><align=right>当前九尾人数："+mtfnum+"</align></size>");
-                                    break;
-                                
-                            }
-                        foreach (var mm in awas[i].message)
+                            tmpscpinfo = tmpscpinfo + "\n<color=#FFA500>SCP106</color>[<color=#FFFF00>" + player.Health + "/" + player.MaxHealth + "</color>][AHP:<color=#FF0000>" + player.ReferenceHub.playerStats.GetModule<HumeShieldStat>().CurValue + "</color>][区域:<color=#FF0000>" + MyApi.MyApi.zoneTranslation[player.Zone] + "</color>]";
+                        }
+                        if (player.Role == RoleTypeId.Scp3114)
                         {
-                            if (mm.Contains("聊天的Timing"))
+                            tmpscpinfo = tmpscpinfo + "\n<color=#FFA500>SCP3114</color>[<color=#FFFF00>" + player.Health + "/" + player.MaxHealth + "</color>][AHP:<color=#FF0000>" + player.ReferenceHub.playerStats.GetModule<HumeShieldStat>().CurValue + "</color>][区域:<color=#FF0000>" + MyApi.MyApi.zoneTranslation[player.Zone] + "</color>]";
+                        }
+                        if (player.Role == RoleTypeId.Scp939)
+                        {
+                            tmpscpinfo = tmpscpinfo + "\n<color=#FFA500>SCP939</color>[<color=#FFFF00>" + player.Health + "/" + player.MaxHealth + "</color>][AHP:<color=#FF0000>" +  player.ReferenceHub.playerStats.GetModule<HumeShieldStat>().CurValue + "</color>][区域:<color=#FF0000>" + MyApi.MyApi.zoneTranslation[player.Zone] + "</color>]";
+                        }
+                        if (player.Role == RoleTypeId.Scp173)
+                        {
+                            tmpscpinfo = tmpscpinfo + "\n<color=#FFA500>SCP173</color>[<color=#FFFF00>" + player.Health + "/" + player.MaxHealth + "</color>][AHP:<color=#FF0000>" + player.ReferenceHub.playerStats.GetModule<HumeShieldStat>().CurValue + "</color>][区域:<color=#FF0000>" + MyApi.MyApi.zoneTranslation[player.Zone] + "</color>]";
+                        }
+                        if (player.Role == RoleTypeId.Scp049)
+                        {
+                            tmpscpinfo = tmpscpinfo + "\n<color=#FFA500>SCP049</color>[<color=#FFFF00>" + player.Health + "/" + player.MaxHealth + "</color>][AHP:<color=#FF0000>" + player.ReferenceHub.playerStats.GetModule<HumeShieldStat>().CurValue+ "</color>][区域:<color=#FF0000>" + MyApi.MyApi.zoneTranslation[player.Zone] + "</color>]";
+                        }
+                        if (player.Role == RoleTypeId.Scp096)
+                        {
+                            tmpscpinfo = tmpscpinfo + "\n<color=#FFA500>SCP096</color>[<color=#FFFF00>" + player.Health + "/" + player.MaxHealth + "</color>][AHP:<color=#FF0000>" +  player.ReferenceHub.playerStats.GetModule<HumeShieldStat>().CurValue + "</color>][区域:<color=#FF0000>" + MyApi.MyApi.zoneTranslation[player.Zone] + "</color>]";
+                        }
+                        if (player.Role == RoleTypeId.Scp079)
+                        {
+                            if (player.ReferenceHub.roleManager.CurrentRole is Scp079Role scp079Role)
                             {
-                                str.Insert(0, mm);
-                            }
-                            if (mm.Contains("玩家角色介绍"))
-                            {
-                                str.Append(mm);
-                            }
-                            if (mm.Contains("临时消息"))
-                            {
-                                str.Append(mm);
+                                scp079Role.SubroutineModule.TryGetSubroutine(out Scp079TierManager tier);
+                                scp079Role.SubroutineModule.TryGetSubroutine(out Scp079AuxManager tier2);
+                                tmpscpinfo = tmpscpinfo + "\n<color=#FFA500>SCP079</color><color=#FFFF00>[Online]等级:" +tier.AccessTierLevel + "电量:" +tier2._aux+"</color>";
                             }
                         }
-                        if (awas[i].playerawa.GameObject != null)
+                        if (player.Role == RoleTypeId.Scp0492)
                         {
-                            if (awas[i].playerawa.IsAlive)
-                            {
-                                awas[i].playerawa.ReceiveHint(str.ToString());
-                            }
-                            else
-                            {
-                                if (awas[i].playerawa.Role != RoleTypeId.None)
-                                {
-                                    awas[i].playerawa.ReceiveHint(str + "<size=21>"+deathinfo +"</size>"+ "\n\n\n\n\n");
-                                }
-                            }
+                            scp492num++;
                         }
-                        str.Clear();
                     }
+                    else if (player.Team != Team.OtherAlive && player.IsAlive)
+                    {
+                        if (!teamAmounts.ContainsKey(player.Team))
+                        {
+                            teamAmounts[player.Team] = 0;
+                        }
+                        teamAmounts[player.Team] += 1;
+                    }
+     
                 }
-                catch (Exception ex)
+                catch
                 {
-                    Log.Info(ex.Message);
-                    Log.Info(ex.GetBaseException().ToString());
+                }
+            }
+            tmpscpinfo += ("\n<color=#FFA500>小僵尸数量</color>[" + scp492num + "]");
+            foreach (var varp in players)
+            {
+                /*if (!MenuSystemMain.show_menu.ContainsKey(varp.Id) ||
+                    MenuSystemMain.show_menu[varp.Id] <= DateTime.Now)
+                {
+
+                }*/
+                if (varp.Team == Team.SCPs)
+                {
+                    SetHint(varp, "<align=right><size=12>" + tmpscpinfo + "</size></align>", 10,
+                        ScreenType.Center);
+                }
+                else if (teamAmounts.ContainsKey(varp.Team))
+                {
+                    var tmpmessage =
+                        $"[<color={varp.RoleBase.RoleColor.ToHex()}>{MyApi.MyApi.TeamTranslation[varp.Team]}]</color> {teamAmounts[varp.Team]}";
+                    SetHint(varp, "<align=right>" + tmpmessage + "</align>", 10, ScreenType.Center);
                 }
             }
         }
-    }
-    public static void AddTempHintToAll(string thing, int time)
-    {
-        foreach (var tmpplayer in Player.GetPlayers())
+
+        public static string BuildPlayerHintMessage(Player player)
         {
-            AddTempHint(tmpplayer,thing,time);
-        }
-    }
-    public static void AddTempHint(Player player, string thing, int time)
-    {
-        if (player.GameObject != null)
-        {
-            foreach (awa awa2 in awas)
+            int outrange = 0;
+            string buiuled = "UI系统出现异常，可能会自动恢复也可能不会，没有你的信息";
+            if (PlayerHintInfos.ContainsKey(player.PlayerId))
             {
-                if (awa2.playeridawa == player.PlayerId)
+                buiuled = "";
+                if (player.IsAlive)
                 {
-                    awa2.message.Add("\n<size=0>临时消息</size>\n" + thing);
+                    SetHint(player, PlayerHintInfos[player.PlayerId].playerinfo, 10, ScreenType.Bottom);
+                }
+                else
+                {
+                    SetHint(player, deathinfo, 10, ScreenType.Bottom);
+                }
+                for (int i = 0; i < (int)ScreenType.End; i++)
+                {
+                    int needline = 7;
+                    if (i == (int)ScreenType.Center)
+                    {
+                        if (player.Team == Team.SCPs)
+                        {
+                            needline = 14;
+                        }
+                    }
+                    string tmp = PlayerHintInfos[player.PlayerId].showInfo[(ScreenType)(i)];
+                    if (i == (int)ScreenType.Center)
+                    {
+                        if (player.Team == Team.SCPs)
+                        {
+                            tmp = "<line-height=12>" + tmp;
+                        }
+                    }
+                    int line = tmp.Split('\n').Length;
+                    buiuled += tmp;
+                    if (line != 0)
+                    {
+                        if (line <= needline - outrange)
+                        {
+                            for (int i2 = 0; i2 < needline + 1- outrange - line; i2++)
+                            {
+                                buiuled += '\n';
+                            }
+                            outrange = 0;
+                        }
+                        else
+                        {
+                            outrange = line - needline + outrange;
+                        }
+                    }
+                    else
+                    {
+                        buiuled += "\n\n\n\n\n\n\n";
+                    }
+                    if (i == (int)ScreenType.Center)
+                    {
+                        if (player.Team == Team.SCPs)
+                        {
+                            buiuled += "<line-height=24>";
+                        }
+                    }
+                }
+            }
+            else
+            {
+                PlayerHintInfos[player.PlayerId] = new PlayerHintInfo();
+            }
+            return buiuled;
+        }
+        private static string BuildLevelMessage(int experience)
+        {
+            int nextLevelExp = 1000;
+            experience %= 1000;
+            double percentage = (double)experience / nextLevelExp * 100;
+            int totalBlocks = 10; // 进度条总长度（可以根据需要调整）
+            int filledBlocks = (int)(percentage / 100 * totalBlocks);
+            int emptyBlocks = totalBlocks - filledBlocks;
+            string progressBar = new string('■', filledBlocks) + new string('□', emptyBlocks);
+            return $"{progressBar} {percentage:F2}%";
+        }
+        private static IEnumerator<float> YyyServerHint()
+        {
+            yield return Timing.WaitForSeconds(5f);
+            int awa = 0;
+
+            double tps = 60;
+            while (true)
+            {
+                yield return Timing.WaitForSeconds(1f);
+                string uiinfo = "<size=13>感谢游玩<color=#FF69B4>嘤嘤嘤</color>服务器 插件版本<color=#4CAF50>纯净0.0.1</color></size>";
+                if (Round.IsRoundStarted)
+                {
+                    try
+                    {
+                        awa++;
+                        if (awa >= 9)
+                        {
+                            awa = 0;
+                            GetSCPHP();
+                            tps = Math.Round(1.0 / (double)Time.smoothDeltaTime);
+                        }
+     
+                        foreach (var varInfo in PlayerHintInfos)
+                        {
+                            var value = varInfo.Value;
+                            Player player = Player.Get(varInfo.Key);
+                            if (player != null)
+                            {
+                                if (!value.wait)
+                                {
+                                    player.ReceiveHint(
+                                        "<line-height=24><size=24><voffset=12em>" +
+                                        BuildPlayerHintMessage(player) + uiinfo + "\n" +
+                                        (player.IsAlive ? "" : PlayerHintInfos[player.PlayerId].spectinfo) + "\n" +
+                                        $"<size=20>欢迎你<color={player.RoleBase.RoleColor.ToHex()}>{player.DisplayNickname}</color> | 服务器TPS:<color=#00FFFF>{tps}</color> </size>" +
+                                        "</size></line-height></voffset>", 2);
+                                }
+                            }
+                        }
+                    }
+                    catch(Exception ex)
+                    {
+                        Log.Info(ex.StackTrace);
+                    }
+                }
+            }
+        }
+        public static IEnumerator<float> chatTiming(Player sendplayer, string chattxt)
+        {
+            yield return Timing.WaitForSeconds(1f);
+            try
+            {
+            if (sendplayer.GameObject != null)
+            {
+                if (chattxt.Length <= 30)
+                {
+                    if (chatList.Count < 6)
+                    {
+                        chatList.Add("<pos=35%>[<color="+sendplayer.RoleBase.RoleColor.ToHex() +">" +MyApi.MyApi.TranslateOfRoleType [sendplayer.Role] + "</color>]" + sendplayer.Nickname + ":" + chattxt);
+                    }
+                    else
+                    {
+                        chatList.RemoveAt(0);
+                        chatList.Add("<pos=35%>[<color="+sendplayer.RoleBase.RoleColor.ToHex() +">" +MyApi.MyApi.TranslateOfRoleType [sendplayer.Role] + "</color>]" + sendplayer.Nickname + ":" + chattxt);
+                    }
+                    List<string> list = new List<string>();
+                    for (int i = 0; i < chatList.Count; i++)
+                    {
+                        string color = "";
+                        switch (i)
+                        {
+                            case 0:
+                                color = "<color=#FFFF00>";
+                                break;
+                            case 1:
+                                color = "<color=#FFFF15>";
+                                break;
+                            case 2:
+                                color = "<color=#FFFF30>";
+                                break;
+                            case 3:
+                                color = "<color=#FFFF45>";
+                                break;
+                            case 4:
+                                color = "<color=#FFFF60>";
+                                break;
+                            case 5:
+                                color = "<color=#FFFF75>";
+                                break;
+                            case 6:
+                                color = "<color=#FFFF90>";
+                                break;
+                            default:
+                                color = "<color=#FFFF99>";
+                                break;
+                        }
+                        list.Add(color + chatList[i] + "</color>");
+                    }
+                    AddChatHint("<size=16><align=right>" + "<pos=35%>公屏系统(请勿报点辱骂等)队内信息.tc [内容]\n" + string.Join("\n", list) + "</align></size>");
+                    list.Clear();
+                }
+            }
+            }
+            catch(Exception exception)
+            {
+                Log.Info(exception.StackTrace);
+            }
+
+        }
+        [PluginEvent]
+        void ChangingSpectator(PlayerChangeSpectatorEvent ev)
+        {
+            if (ev.NewTarget != null)
+            {
+                try
+                {
+                    PlayerHintInfos[ev.Player.PlayerId].spectinfo =
+                        $"正在观看: <color={ev.NewTarget.RoleBase.RoleColor.ToHex()}>{ev.NewTarget.Nickname}</color> | 称号: {ev.NewTarget.ReferenceHub.serverRoles.Network_myText}";
+                }
+                catch
+                {
+                         
+                }
+            }
+        }
+        public static void AddChatHint(string thing)
+        {
+            foreach (var varp in Player.GetPlayers())
+            {
+                SetHint(varp,thing,9,ScreenType.CenterBottom);
+            }
+        }
+     
+        public static void AddTempHintToAll(string thing, int time,ScreenType type)
+        {
+            foreach (var tmpplayer in Player.GetPlayers())
+            {
+                AddTempHint(tmpplayer,thing,time,type);
+            }
+        }
+        public static void AddTempHint(Player player, string thing, int time , ScreenType type)
+        {
+            int myid = infoid ++;
+            string wantjoin =  "\n<size=0>"+myid+"</size>"+thing;
+            if (PlayerHintInfos.ContainsKey(player.PlayerId))
+            {
+                if (PlayerHintInfos[player.PlayerId].showInfo[type] == "")
+                {
+                    wantjoin = wantjoin.Remove(0,1);
+                    PlayerHintInfos[player.PlayerId].showInfo[type] += wantjoin;
+                }
+                else
+                {
+                    PlayerHintInfos[player.PlayerId].showInfo[type] += wantjoin;
                 }
             }
             Timing.CallDelayed(time, () => {
-                if (player.GameObject != null)
+                try
                 {
-                    foreach (awa awa2 in awas)
+                    if (PlayerHintInfos.ContainsKey(player.PlayerId))
                     {
-                        if (awa2.playeridawa == player.PlayerId)
+                        if( PlayerHintInfos[player.PlayerId].showInfo[type].Contains(myid.ToString()))
                         {
-                            string temp = "";
-                            foreach (string message in awa2.message)
-                            {
-                                if (message.Contains(thing))
-                                {
-                                    temp = message;
-                                }
-                            }
-                            if (temp != "")
-                            {
-                                awa2.message.Remove(temp);
-                            }
+                            PlayerHintInfos[player.PlayerId].showInfo[type] =  PlayerHintInfos[player.PlayerId].showInfo[type].Replace(wantjoin,"");
                         }
                     }
                 }
+                catch(Exception exception)
+                {
+                    Log.Info(exception.StackTrace);
+                }
+
             });
         }
-    }
-
-    [PluginEvent]
-    void OnPlayerJoined(PlayerJoinedEvent ev)
-    {
-        awa tempawa = new awa();
-        tempawa.playerawa = ev.Player;
-        tempawa.playeridawa = ev.Player.PlayerId;
-        awas.Add(tempawa);
-    }
-    [PluginEvent]
-    void OnWaitingForPlayer(WaitingForPlayersEvent ev)
-    {
-        Coroutines.Add(Timing.RunCoroutine(YYYServerHint()));
-    }
-    private static void Reset()
-    {
-        showchat = false;
-        chatList.Clear();
-        foreach (awa awa2 in awas)
+        public static void SetHint(Player player, string thing, int time,ScreenType type)
         {
-            awa2.playerawa = null;
-            awa2.playeridawa = 0;
-            awa2.message.Clear();
-        }
-        awas.Clear();
-        foreach (CoroutineHandle coroutineHandle in Coroutines)
-        {
-            Timing.KillCoroutines(coroutineHandle);
-        }
-        Coroutines.Clear();
-    }
-
-    [PluginEvent]
-    void OnRoundRestart(RoundRestartEvent ev)
-    {
-        Reset();
-    }
-
-    [PluginEvent]
-    void OnPlayerQuit(PlayerLeftEvent ev)
-    {
-        for (int i = awas.Count - 1; i >= 0; i--)
-        {
-            if (awas[i].playeridawa == ev.Player.PlayerId)
+            int myid = infoid ++;
+            string wantjoin =  "<size=0>"+myid+"</size>"+thing;
+            if (PlayerHintInfos.ContainsKey(player.PlayerId))
             {
-                awas.Remove(awas[i]);
-                Log.Info("玩家退出删除他的Hint" + ev.Player.PlayerId);
+                PlayerHintInfos[player.PlayerId].showInfo[type] = wantjoin;
             }
+            Timing.CallDelayed(time, () => {
+                try
+                {
+                    if (PlayerHintInfos.ContainsKey(player.PlayerId))
+                    {
+                        PlayerHintInfos[player.PlayerId].showInfo[type] = PlayerHintInfos[player.PlayerId].showInfo[type].Replace(wantjoin,"");
+                    }
+                }
+                catch(Exception exception)
+                {
+                    Log.Info(exception.StackTrace);
+                }
+            });
+        }
+        [PluginEvent]
+        void OnVer(PlayerJoinedEvent ev)
+        {
+            PlayerHintInfos.Add(ev.Player.PlayerId, new PlayerHintInfo());
+        }
+        [PluginEvent]
+        void OnWaitingForPlayer(WaitingForPlayersEvent ev)
+        {
+            Coroutines.Add(Timing.RunCoroutine(YyyServerHint()));
+        }
+     
+        private static void Reset()
+        {
+            infoid = 0;
+            chatList.Clear();
+            PlayerHintInfos.Clear();
+            foreach (CoroutineHandle coroutineHandle in Coroutines)
+            {
+                Timing.KillCoroutines(coroutineHandle);
+            }
+            Coroutines.Clear();
+        }
+        [PluginEvent]
+        void OnRoundRestart(RoundRestartEvent ev)
+        {
+            Reset();
+        }
+        [PluginEvent]
+        void OnLeft(PlayerLeftEvent ev)
+        {
+            PlayerHintInfos.Remove(ev.Player.PlayerId);
         }
     }
-}

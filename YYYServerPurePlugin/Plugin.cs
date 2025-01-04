@@ -55,17 +55,6 @@ namespace YYYServerPurePlugin
         }
 
         [PluginEvent]
-         void OnRestartingRound(RoundRestartEvent ev)
-        {
-            Timing.CallDelayed(0.5f, () => {
-                var tcpClient = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                IPAddress ipaddress = IPAddress.Parse("127.0.0.1");
-                EndPoint point = new IPEndPoint(ipaddress, Server.Port + 1000);
-                tcpClient.Connect(point);
-                tcpClient.Send(Encoding.UTF8.GetBytes(Server.Port.ToString()));
-            });
-        }
-        [PluginEvent]
         void OnPlayerChangingRole(PlayerChangeRoleEvent ev)
         {
             if (ev.NewRole == RoleTypeId.FacilityGuard)
